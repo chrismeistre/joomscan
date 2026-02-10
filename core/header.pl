@@ -62,6 +62,7 @@ Usage:	$0 [options]
                        
 --about                         |   About Author
 --update                        |   Update to the latest version.
+--update-db                     |   Update vulnerability databases from public sources.
 --debug                         |   Show HTTP requests, responses, timeouts, and rate limiting.
 --help | -h                     |   This help screen.
 --version                       |   Output the current joomscan version and exit.
@@ -89,11 +90,18 @@ sub update
 	print color("reset");
 	exit(1);
 }
+sub update_db
+{
+    do "$mepath/core/updatedb.pl";
+	print color("reset");
+	exit(1);
+}
 
 
 GetOptions(
   'help|h' => sub { help(0) },
   'update' => sub { update(0) },
+  'update-db' => sub { update_db(0) },
   'about' => sub { about(0) },
   'enumerate-components|ec'   => sub { $components = 1 },
   'no-report|nr' => sub { $noreport = 1 },
