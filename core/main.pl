@@ -72,8 +72,10 @@ $ua->default_header('Cookie'=> "$cookie") if($cookie!=1);
 
 # Rate limiting setup
 $rate_limit = $rate_limit || 0;  # 0 = unlimited
-our @request_times = ();
 our $request_count = 0;
+our $last_request_time = 0;
+# Minimum interval between requests: spread evenly over 60 seconds
+our $min_interval = $rate_limit > 0 ? 60.0 / $rate_limit : 0;
 
 sub debug_print {
     return unless $debug;
@@ -86,26 +88,17 @@ sub debug_print {
 sub enforce_rate_limit {
     return if $rate_limit <= 0;
 
-    my $now = Time::HiRes::time();
-    # Remove timestamps older than 60 seconds
-    @request_times = grep { $_ > $now - 60 } @request_times;
-
-    my $count = scalar(@request_times);
-    if ($count >= $rate_limit) {
-        my $oldest = $request_times[0];
-        my $wait_time = 60 - ($now - $oldest);
-        if ($wait_time > 0) {
-            debug_print(sprintf("Rate limit hit (%d/%d req/min). Sleeping %.1fs...", $count, $rate_limit, $wait_time));
+    if ($last_request_time > 0) {
+        my $now = Time::HiRes::time();
+        my $elapsed = $now - $last_request_time;
+        if ($elapsed < $min_interval) {
+            my $wait_time = $min_interval - $elapsed;
+            debug_print(sprintf("Rate limiting: sleeping %.2fs (%.1f req/min)", $wait_time, $rate_limit));
             Time::HiRes::sleep($wait_time);
         }
-        # Clean up again after sleeping
-        $now = Time::HiRes::time();
-        @request_times = grep { $_ > $now - 60 } @request_times;
-    } elsif ($debug && $rate_limit > 0) {
-        debug_print(sprintf("Rate: %d/%d req/min", $count + 1, $rate_limit));
     }
 
-    push @request_times, Time::HiRes::time();
+    $last_request_time = Time::HiRes::time();
 }
 
 sub get_url {
