@@ -1,2 +1,5 @@
 #Ignore reports
 reports/*
+
+#Ignore DB backups created by --update-db
+exploit/db/backup_*/
