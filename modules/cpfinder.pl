@@ -4,7 +4,7 @@ dprint("admin finder");
 $amtf=0;
 @admins = ('administrator','admin','panel','webadmin','modir','manage','administration','joomla/administrator','joomla/admin');
 foreach $admin(@admins){
-    $source=$ua->get("$target/$admin/");
+    $source=get_url("$target/$admin/");
     if($source->code=~200 or $source->code=~403 or $source->code=~500 or $source->code=~501){
         $amtf=1;
         $adming=$admin;

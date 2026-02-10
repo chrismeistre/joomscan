@@ -1,6 +1,6 @@
 #start WAF Detector
 $fwtf=0;
-$source=$ua->get("$target/")->headers_as_string;
+$source=get_url("$target/")->headers_as_string;
 dprint("FireWall Detector");
 if ($source =~ /cloudflare-nginx/g or $source =~ /CF-Chl-Bypass/g or $source =~ /Server\: cloudflare/g or $source =~ /__cfduid/g ) {
 	tprint("Firewall detected : CloudFlare");
@@ -92,7 +92,7 @@ if ($source =~ /cloudflare-nginx/g or $source =~ /CF-Chl-Bypass/g or $source =~ 
 }
 
 
-$source=$ua->get("$target/../../etc")->headers_as_string;
+$source=get_url("$target/../../etc")->headers_as_string;
 if ($source =~ /mod_security/g or $source =~ /Mod_Security/g or $source =~ /NOYB/g) {
 	tprint("Firewall detected : Mod_Security");
 	$fwtf=1;

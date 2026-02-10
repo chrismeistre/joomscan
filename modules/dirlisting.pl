@@ -5,7 +5,7 @@ $ctf=0;
 
 my $cnftmp="";
 foreach $dir(@dirl){
-	$source=$ua->get("$target/$dir/")->decoded_content;
+	$source=get_url("$target/$dir/")->decoded_content;
 	if ($source =~ /<title>Index of/g or $source =~ /Last modified<\/a>/g) {
 		$cnftmp="$cnftmp$target/$dir\n";
 		$ctf=1;

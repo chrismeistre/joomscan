@@ -3,7 +3,7 @@ dprint("Detecting Joomla Version");
 
 $ua->timeout(60);
 
-my $response = $ua->get("$target");
+my $response = get_url("$target");
 if (!$response->is_success) {
     print color("red");
     print "[++] The target is not alive!\n\n";
@@ -13,7 +13,7 @@ if (!$response->is_success) {
 
 $ua->timeout($timeout);
 
-$source=$ua->get("$target/")->as_string;
+$source=get_url("$target/")->as_string;
 if($source =~ /X-Meta-Generator\:(.*?)\n/){
 $ppp=$1;
     if($ppp =~ /[0-9]+(\.[0-9]+)+/g){
@@ -23,7 +23,7 @@ $ppp=$1;
 if($ver !~ m/\./i){
     @vers = ('administrator/manifests/files/joomla.xml','language/en-GB/en-GB.xml','administrator/components/com_content/content.xml','administrator/components/com_plugins/plugins.xml','administrator/components/com_media/media.xml','mambots/content/moscode.xml');
     foreach $verc(@vers){
-            $source=$ua->get("$target/$verc")->decoded_content;
+            $source=get_url("$target/$verc")->decoded_content;
             if($source =~ /\<version\>(.*?)\<\/version\>/){
                 $ver="Joomla $1";
                 last;
@@ -33,7 +33,7 @@ if($ver !~ m/\./i){
 if($ver !~ m/\./i){
     @vers = ('language/en-GB/en-GB.xml','templates/system/css/system.css','media/system/js/mootools-more.js','language/en-GB/en-GB.ini','htaccess.txt','language/en-GB/en-GB.com_media.ini');
     foreach $verc(@vers){
-            $source=$ua->get("$target/$verc")->decoded_content;
+            $source=get_url("$target/$verc")->decoded_content;
             if($source =~ /system\.css 20196 2011\-01\-09 02\:40\:25Z ian/ or $source =~ /MooTools\.More\=\{version\:\"1\.3\.0\.1\"/ or $source =~ /en-GB\.ini 20196 2011\-01\-09 02\:40\:25Z ian/ or $source =~ /en-GB\.ini 20990 2011\-03\-18 16\:42\:30Z infograf768/ or $source =~ /20196 2011\-01\-09 02\:40\:25Z ian/){
                 $ver="Joomla 1.6";
                 last;
@@ -57,7 +57,7 @@ if($ver !~ m/\./i){
 }
 
 if($ver !~ m/\./i){
-    $source=$ua->get("$target/README.txt")->decoded_content;
+    $source=get_url("$target/README.txt")->decoded_content;
     if($source =~ /package to version (.*?)\n/){
         $ver="Joomla $1";
     }

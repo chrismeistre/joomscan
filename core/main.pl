@@ -69,6 +69,43 @@ if($proxy!=1){
 $ua->cookie_jar({}) if($cookie!=1);
 $ua->default_header('Cookie'=> "$cookie") if($cookie!=1);
 
+# Rate limiting setup
+$rate_limit = $rate_limit || 0;  # 0 = unlimited
+our @request_times = ();
+
+sub enforce_rate_limit {
+    return if $rate_limit <= 0;
+
+    my $now = time();
+    # Remove timestamps older than 60 seconds
+    @request_times = grep { $_ > $now - 60 } @request_times;
+
+    if (scalar(@request_times) >= $rate_limit) {
+        # Need to wait until oldest request is 60+ seconds old
+        my $oldest = $request_times[0];
+        my $wait_time = 60 - ($now - $oldest);
+        if ($wait_time > 0) {
+            sleep($wait_time + 1);
+        }
+        # Clean up again after sleeping
+        $now = time();
+        @request_times = grep { $_ > $now - 60 } @request_times;
+    }
+
+    push @request_times, time();
+}
+
+sub get_url {
+    my ($url) = @_;
+    enforce_rate_limit();
+    return $ua->get($url);
+}
+
+sub head_url {
+    my ($url) = @_;
+    enforce_rate_limit();
+    return $ua->head($url);
+}
 
 our @dlog;our @tflog;
 

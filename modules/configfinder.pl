@@ -6,7 +6,7 @@ dprint("Checking sensitive config.php.x file");
 
 my $cnftmp="";
 foreach $config(@configs){
-    $source=$ua->get("$target/$config")->decoded_content;
+    $source=get_url("$target/$config")->decoded_content;
     if($source =~ m/public \$ftp_pass/i || $source =~ m/\$dbtype/i || $source =~ m/force_ssl/i || $source =~ m/mosConfig_secret/i || $source =~ m/mosConfig_dbprefix/i ){
         $cnftmp="$cnftmp\Readable config file is found \n config file path : $target/$config\n";
         $ctf=1;

@@ -54,6 +54,7 @@ Usage:	$0 [options]
 --user-agent | -a <User-Agent>  |   Use the specified User-Agent.
 --random-agent | -r             |   Use a random User-Agent.
 --timeout <Time-Out>            |   Set timeout.
+--rate-limit <Number>           |   Maximum requests per minute (0 = unlimited).
 --proxy=PROXY                   |   Use a proxy to connect to the target URL
            Proxy example: --proxy http://127.0.0.1:8080
                                   https://127.0.0.1:443
@@ -99,6 +100,7 @@ GetOptions(
   'random-agent|r'   => sub { $randomagent = 1 },
   'user-agent|a=s' => \$agent,
   'timeout=s' => \$timeout,
+  'rate-limit=i' => \$rate_limit,
   'proxy=s' => \$proxy,
   'cookie=s' => \$cookie,
   'u|url=s' => \$target,
