@@ -62,6 +62,7 @@ Usage:	$0 [options]
                        
 --about                         |   About Author
 --update                        |   Update to the latest version.
+--debug                         |   Show HTTP requests, responses, timeouts, and rate limiting.
 --help | -h                     |   This help screen.
 --version                       |   Output the current joomscan version and exit.
 
@@ -103,6 +104,7 @@ GetOptions(
   'rate-limit=i' => \$rate_limit,
   'proxy=s' => \$proxy,
   'cookie=s' => \$cookie,
+  'debug' => \$debug,
   'u|url=s' => \$target,
   'm|mass=s' => \$urlfile,
   'version' => sub { print "\n\nVersion : $version\n\n";exit; },

@@ -3,6 +3,7 @@
 use utf8;
 use open ':std', ':encoding(UTF-8)';
 use Term::ANSIColor;
+use Time::HiRes qw(gettimeofday tv_interval);
 
 my $can_regexp=1;
 eval "use Regexp::Common \"URI\"";
@@ -72,39 +73,79 @@ $ua->default_header('Cookie'=> "$cookie") if($cookie!=1);
 # Rate limiting setup
 $rate_limit = $rate_limit || 0;  # 0 = unlimited
 our @request_times = ();
+our $request_count = 0;
+
+sub debug_print {
+    return unless $debug;
+    my ($msg) = @_;
+    print color("magenta");
+    print "[DEBUG] $msg\n";
+    print color("blue");
+}
 
 sub enforce_rate_limit {
     return if $rate_limit <= 0;
 
-    my $now = time();
+    my $now = Time::HiRes::time();
     # Remove timestamps older than 60 seconds
     @request_times = grep { $_ > $now - 60 } @request_times;
 
-    if (scalar(@request_times) >= $rate_limit) {
-        # Need to wait until oldest request is 60+ seconds old
+    my $count = scalar(@request_times);
+    if ($count >= $rate_limit) {
         my $oldest = $request_times[0];
         my $wait_time = 60 - ($now - $oldest);
         if ($wait_time > 0) {
-            sleep($wait_time + 1);
+            debug_print(sprintf("Rate limit hit (%d/%d req/min). Sleeping %.1fs...", $count, $rate_limit, $wait_time));
+            Time::HiRes::sleep($wait_time);
         }
         # Clean up again after sleeping
-        $now = time();
+        $now = Time::HiRes::time();
         @request_times = grep { $_ > $now - 60 } @request_times;
+    } elsif ($debug && $rate_limit > 0) {
+        debug_print(sprintf("Rate: %d/%d req/min", $count + 1, $rate_limit));
     }
 
-    push @request_times, time();
+    push @request_times, Time::HiRes::time();
 }
 
 sub get_url {
     my ($url) = @_;
+    $request_count++;
     enforce_rate_limit();
-    return $ua->get($url);
+    debug_print("GET #$request_count $url");
+    my $t0 = [gettimeofday];
+    my $response = $ua->get($url);
+    my $elapsed = tv_interval($t0);
+    my $status = $response->status_line;
+    if ($response->is_success) {
+        debug_print(sprintf("  -> %s (%.2fs)", $status, $elapsed));
+    } else {
+        debug_print(sprintf("  -> %s (%.2fs) ***", $status, $elapsed));
+        if ($status =~ /timeout/i || $status =~ /timed out/i) {
+            debug_print("  -> REQUEST TIMED OUT after ${timeout}s");
+        }
+    }
+    return $response;
 }
 
 sub head_url {
     my ($url) = @_;
+    $request_count++;
     enforce_rate_limit();
-    return $ua->head($url);
+    debug_print("HEAD #$request_count $url");
+    my $t0 = [gettimeofday];
+    my $response = $ua->head($url);
+    my $elapsed = tv_interval($t0);
+    my $status = $response->status_line;
+    if ($response->is_success) {
+        debug_print(sprintf("  -> %s (%.2fs)", $status, $elapsed));
+    } else {
+        debug_print(sprintf("  -> %s (%.2fs) ***", $status, $elapsed));
+        if ($status =~ /timeout/i || $status =~ /timed out/i) {
+            debug_print("  -> REQUEST TIMED OUT after ${timeout}s");
+        }
+    }
+    return $response;
 }
 
 our @dlog;our @tflog;
@@ -151,3 +192,11 @@ sub fprint{
 
 print color("blue");
 print "Processing $target ...\n\n\n";
+
+if ($debug) {
+    debug_print("Debug mode enabled");
+    debug_print("Timeout: ${timeout}s");
+    debug_print("Rate limit: " . ($rate_limit > 0 ? "$rate_limit req/min" : "unlimited"));
+    debug_print("User-Agent: $agent");
+    debug_print("---");
+}
